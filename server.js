@@ -10,28 +10,37 @@ var months = ['January', 'February', 'March', 'April',
 
 var app = express();
 
+function naturalDate(date) {
+    return months[date.getMonth()] + " " + date.getDate() + ", " + date.getFullYear();
+}
+
 app.use(sassMiddleware(path.join(__dirname, 'views')));
 app.use(express.static(path.join(__dirname, 'views')));
 
 app.get('*', function(req,res) {
     
-    // console.log("Recognised a get");
-    // console.log(path.join(__dirname, 'views/'));
-    // app.use(express.static(path.join(__dirname, 'views/')));
-    
     if(req.url.length > 1) {
-        console.log("Dynamic response required");
-        // console.log("__dirname is",__dirname);
-        // app.use(express.static(path.join(__dirname,"/views")));
-        // app.use(express.static('views'));
-        res.end("Dynamic response required here");
-    // } else {
-    
-    // console.log(req.url);
-    // console.log(req.url.substr(1));
-    // console.log(Date.parse(req.url.substr(1)));
-    // console.log(parseInt(req.url.substr(1)));
-    // res.send("Hello World!");
+        // set up an empty return object "in case"
+        var ret = {
+            'unix': null,
+            'natural' : null
+        };
+        // get the potential date info
+        var potDate = req.url.substr(1).replace(/%20/g, " ");
+        // check whether a number, in which case timestamp
+        if (!/\D/.test(potDate)) {
+            var myDate = new Date(parseInt(potDate) * 1000)
+            ret.unix = parseInt(potDate);
+            ret.natural = naturalDate(myDate);
+        }
+        // create a date; may be invalid ...
+        var myDate = new Date(potDate);
+        // if valid, do thing
+        if(!isNaN(myDate.getHours())) {
+            ret.natural = naturalDate(myDate);
+            ret.unix = Math.floor(myDate.getTime() / 1000);
+        }
+        res.json(ret);
     }
 });
 
